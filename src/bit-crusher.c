@@ -9,6 +9,7 @@ Author: Viacheslav Lotsmanov
 
 #include "bit-crusher.h"
 
+#include <tgmath.h>
 #include <math.h>
 
 /** Define a macro for converting a gain in dB to a coefficient */

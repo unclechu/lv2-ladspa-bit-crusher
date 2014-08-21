@@ -11,7 +11,6 @@ Author: Viacheslav Lotsmanov
 #define BIT_CRUSHER_H
 
 #include <inttypes.h>
-#include <tgmath.h>
 
 typedef struct {
 	uint32_t sample_counter;
