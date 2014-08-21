@@ -10,10 +10,13 @@ Author: Viacheslav Lotsmanov
 #ifndef BIT_CRUSHER_H
 #define BIT_CRUSHER_H
 
+#define BIT_CRUSHER_MAX_BIT_TYPE int32_t
+#define BIT_CRUSHER_MAX_DOWNSAMPLE_TYPE uint8_t
+
 #include <inttypes.h>
 
 typedef struct {
-	uint8_t sample_counter;
+	BIT_CRUSHER_MAX_DOWNSAMPLE_TYPE sample_counter;
 	float last_sample;
 } Bit_crusher_state;
 

@@ -32,14 +32,14 @@ inline float bit_crusher_drive(const float val, const float drive)
 	return bit_crusher_limiter( val * DB_CO(drive) );
 }
 
-inline int16_t bit_crusher_to_N_bit(const float val, const uint8_t bit_depth)
+inline BIT_CRUSHER_MAX_BIT_TYPE bit_crusher_to_N_bit(const float val, const uint8_t bit_depth)
 {
 	if (val >= 1.0) return powf(2, bit_depth-1) - 1;
 	else if (val <= -1.0) return powf(-2, bit_depth-1);
 	else return floorf( val * -powf(-2, bit_depth-1) );
 }
 
-inline float bit_crusher_N_bit_to_float(const int16_t val, const uint8_t bit_depth)
+inline float bit_crusher_N_bit_to_float(const BIT_CRUSHER_MAX_BIT_TYPE val, const uint8_t bit_depth)
 {
 	return val / -powf(-2, bit_depth-1);
 }

@@ -20,7 +20,7 @@ Author: Viacheslav Lotsmanov
 #define MIN_DRIVE 0.0f
 #define MAX_DRIVE 90.0f
 #define MIN_BIT_DEPTH 1
-#define MAX_BIT_DEPTH 16
+#define MAX_BIT_DEPTH 32
 #define MIN_DOWNSAMPLING 1
 #define MAX_DOWNSAMPLING 128
 #define MIN_OUTPUT_GAIN -90.0f
