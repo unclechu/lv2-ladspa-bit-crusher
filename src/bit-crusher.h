@@ -13,7 +13,7 @@ Author: Viacheslav Lotsmanov
 #include <inttypes.h>
 
 typedef struct {
-	uint32_t sample_counter;
+	uint8_t sample_counter;
 	float last_sample;
 } Bit_crusher_state;
 

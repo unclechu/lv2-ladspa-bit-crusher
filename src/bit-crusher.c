@@ -69,10 +69,19 @@ void bit_crusher_process(
 	uint32_t i;
 
 	for (i=0; i<n_samples; i++) {
-		output[i] =
+		state->sample_counter++;
+
+		if (state->sample_counter < downsampling) {
+			output[i] = state->last_sample;
+			continue;
+		} else state->sample_counter = 0;
+
+		float sample =
 			bit_crusher_crush_bit(
 				bit_crusher_drive( input[i], drive ),
 				bit_depth
 			) * DB_CO(output_gain);
+		state->last_sample = sample;
+		output[i] = sample;
 	}
 }

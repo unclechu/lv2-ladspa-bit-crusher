@@ -17,6 +17,15 @@ Author: Viacheslav Lotsmanov
 #define URI_MONO "https://github.com/unclechu/lv2-ladspa-bit-crusher/mono"
 #define URI_STEREO "https://github.com/unclechu/lv2-ladspa-bit-crusher/stereo"
 
+#define MIN_DRIVE 0.0f
+#define MAX_DRIVE 90.0f
+#define MIN_BIT_DEPTH 1
+#define MAX_BIT_DEPTH 16
+#define MIN_DOWNSAMPLING 1
+#define MAX_DOWNSAMPLING 128
+#define MIN_OUTPUT_GAIN -90.0f
+#define MAX_OUTPUT_GAIN 12.0f
+
 // ports types {{{1
 
 typedef enum {
@@ -153,29 +162,29 @@ static void connect_port_stereo (
 
 	inline float prepare_drive_knob(float val)
 	{
-		if (val < 0.0f) return 0.0f;
-		else if (val > 90.0f) return 90.0f;
+		if (val < MIN_DRIVE) return MIN_DRIVE;
+		else if (val > MAX_DRIVE) return MAX_DRIVE;
 		else return val;
 	}
 
 	inline uint8_t prepare_bit_depth_knob(float val)
 	{
-		if ((uint8_t)val < 2) return 2;
-		else if ((uint8_t)val > 16) return 16;
+		if ((uint8_t)val < MIN_BIT_DEPTH) return MIN_BIT_DEPTH;
+		else if ((uint8_t)val > MAX_BIT_DEPTH) return MAX_BIT_DEPTH;
 		else return (uint8_t)val;
 	}
 
 	inline uint8_t prepare_downsampling_knob(float val)
 	{
-		if ((uint8_t)val < 1) return 1;
-		else if ((uint8_t)val > 8) return 8;
+		if ((uint8_t)val < MIN_DOWNSAMPLING) return MIN_DOWNSAMPLING;
+		else if ((uint8_t)val > MAX_DOWNSAMPLING) return MAX_DOWNSAMPLING;
 		else return (uint8_t)val;
 	}
 
 	inline float prepare_output_gain_knob(float val)
 	{
-		if (val < -90.0f) return -90.0f;
-		else if (val > 12.0f) return 12.0f;
+		if (val < MIN_OUTPUT_GAIN) return MIN_OUTPUT_GAIN;
+		else if (val > MAX_OUTPUT_GAIN) return MAX_OUTPUT_GAIN;
 		else return val;
 	}
 
