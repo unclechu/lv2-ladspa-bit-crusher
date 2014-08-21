@@ -9,6 +9,7 @@ p:in a pg:StereoGroup.
 p:out a pg:StereoGroup.
 p:
 	a lv2:Plugin, lv2:MixerPlugin;
+	lv2:index 1;
 	lv2:binary <bit-crusher.so>;
 	doap:name "Bit Crusher (Stereo)";
 	doap:maintainer [ foaf:name "Viacheslav Lotsmanov"; ];

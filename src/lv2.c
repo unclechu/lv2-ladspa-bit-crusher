@@ -229,6 +229,34 @@ static void run_stereo (
 	const uint8_t bit_depth = prepare_bit_depth_knob( *(plugin->bit_depth) );
 	const uint8_t downsampling = prepare_downsampling_knob( *(plugin->downsampling) );
 	const float output_gain = prepare_output_gain_knob( *(plugin->output_gain) );
+
+	bit_crusher_process(
+		plugin->state_l,
+
+		n_samples,
+
+		input_l,
+		output_l,
+
+		drive,
+		bit_depth,
+		downsampling,
+		output_gain
+	);
+
+	bit_crusher_process(
+		plugin->state_r,
+
+		n_samples,
+
+		input_r,
+		output_r,
+
+		drive,
+		bit_depth,
+		downsampling,
+		output_gain
+	);
 }
 
 // run() }}}1
