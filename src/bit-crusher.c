@@ -11,6 +11,9 @@ Author: Viacheslav Lotsmanov
 
 #include <math.h>
 
+/** Define a macro for converting a gain in dB to a coefficient */
+#define DB_CO(g) ((g) > -90.0f ? powf(10.0f, (g) * 0.05f) : 0.0f)
+
 void bit_crusher_init_state(Bit_crusher_state *state)
 {
 	state->sample_counter = 0;

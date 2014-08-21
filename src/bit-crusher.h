@@ -13,9 +13,6 @@ Author: Viacheslav Lotsmanov
 #include <inttypes.h>
 #include <tgmath.h>
 
-/** Define a macro for converting a gain in dB to a coefficient */
-#define DB_CO(g) ((g) > -90.0f ? powf(10.0f, (g) * 0.05f) : 0.0f)
-
 typedef struct {
 	uint32_t sample_counter;
 	float last_sample;
