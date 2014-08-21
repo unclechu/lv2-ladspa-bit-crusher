@@ -28,16 +28,16 @@ Author: Viacheslav Lotsmanov
 
 // ports types {{{1
 
-typedef enum {
+typedef enum { // PortIndex_MONO {{{2
 	m_input = 0,
 	m_output = 1,
 	m_drive = 2,
 	m_bit_depth = 3,
 	m_downsampling = 4,
 	m_output_gain = 5
-} PortIndex_MONO;
+} PortIndex_MONO; // }}}2
 
-typedef enum {
+typedef enum { // PortIndex_STEREO {{{2
 	s_input_l = 0,
 	s_input_r = 1,
 	s_output_l = 2,
@@ -46,9 +46,9 @@ typedef enum {
 	s_bit_depth = 5,
 	s_downsampling = 6,
 	s_output_gain = 7
-} PortIndex_STEREO;
+} PortIndex_STEREO; // }}}2
 
-typedef struct {
+typedef struct { // Plugin_MONO {{{2
 	// audio ports
 	const float* input;
 	float* output;
@@ -61,9 +61,9 @@ typedef struct {
 
 	// inner
 	Bit_crusher_state *state;
-} Plugin_MONO;
+} Plugin_MONO; // }}}2
 
-typedef struct {
+typedef struct { // Plugin_STEREO {{{2
 	// audio ports
 	const float* input_l;
 	const float* input_r;
@@ -79,7 +79,7 @@ typedef struct {
 	// inner
 	Bit_crusher_state *state_l;
 	Bit_crusher_state *state_r;
-} Plugin_STEREO;
+} Plugin_STEREO; // }}}2
 
 // ports types }}}1
 
