@@ -4,4 +4,4 @@ Changelog
 v0.2
 ----
 
-- For LADSPA knobs "bit-depth" and "downsampling" now is float (for faders instead of number boxes);
+- LADSPA knobs "bit-depth" and "downsampling" replaced from integer to float (for faders instead of number boxes);
