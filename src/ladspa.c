@@ -169,7 +169,7 @@ const LADSPA_Descriptor* ladspa_descriptor(unsigned long Index)
 			portRangeHints[m_wet].HintDescriptor = (LADSPA_HINT_DEFAULT_0 | LADSPA_HINT_BOUNDED_BELOW | LADSPA_HINT_BOUNDED_ABOVE);
 			portRangeHints[m_wet].LowerBound = MIN_WET;
 			portRangeHints[m_wet].UpperBound = MAX_WET;
-			portRangeHints[m_invert_wet_phase].HintDescriptor = (LADSPA_HINT_DEFAULT_0 | LADSPA_HINT_BOUNDED_BELOW | LADSPA_HINT_BOUNDED_ABOVE);
+			portRangeHints[m_invert_wet_phase].HintDescriptor = (LADSPA_HINT_TOGGLED | LADSPA_HINT_DEFAULT_0 | LADSPA_HINT_BOUNDED_BELOW | LADSPA_HINT_BOUNDED_ABOVE);
 			portRangeHints[m_invert_wet_phase].LowerBound = MIN_INVERT_WET_PHASE;
 			portRangeHints[m_invert_wet_phase].UpperBound = MAX_INVERT_WET_PHASE;
 			// ports range hints }}}3
@@ -255,7 +255,7 @@ const LADSPA_Descriptor* ladspa_descriptor(unsigned long Index)
 			portRangeHints[s_wet].HintDescriptor = (LADSPA_HINT_DEFAULT_0 | LADSPA_HINT_BOUNDED_BELOW | LADSPA_HINT_BOUNDED_ABOVE);
 			portRangeHints[s_wet].LowerBound = MIN_WET;
 			portRangeHints[s_wet].UpperBound = MAX_WET;
-			portRangeHints[s_invert_wet_phase].HintDescriptor = (LADSPA_HINT_DEFAULT_0 | LADSPA_HINT_BOUNDED_BELOW | LADSPA_HINT_BOUNDED_ABOVE);
+			portRangeHints[s_invert_wet_phase].HintDescriptor = (LADSPA_HINT_TOGGLED | LADSPA_HINT_DEFAULT_0 | LADSPA_HINT_BOUNDED_BELOW | LADSPA_HINT_BOUNDED_ABOVE);
 			portRangeHints[s_invert_wet_phase].LowerBound = MIN_INVERT_WET_PHASE;
 			portRangeHints[s_invert_wet_phase].UpperBound = MAX_INVERT_WET_PHASE;
 			// ports range hints }}}3
