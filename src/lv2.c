@@ -23,8 +23,12 @@ Author: Viacheslav Lotsmanov
 #define MAX_BIT_DEPTH 32
 #define MIN_DOWNSAMPLING 1
 #define MAX_DOWNSAMPLING 128
-#define MIN_OUTPUT_GAIN -90.0f
-#define MAX_OUTPUT_GAIN 12.0f
+#define MIN_DRY -90.0f
+#define MAX_DRY 12.0f
+#define MIN_WET -90.0f
+#define MAX_WET 12.0f
+#define MIN_INVERT_WET_PHASE 0.0f
+#define MAX_INVERT_WET_PHASE 1.0f
 
 // ports types {{{1
 
@@ -34,7 +38,9 @@ typedef enum { // PortIndex_MONO {{{2
 	m_drive = 2,
 	m_bit_depth = 3,
 	m_downsampling = 4,
-	m_output_gain = 5
+	m_dry = 5,
+	m_wet = 6,
+	m_invert_wet_phase = 7
 } PortIndex_MONO; // }}}2
 
 typedef enum { // PortIndex_STEREO {{{2
@@ -45,7 +51,9 @@ typedef enum { // PortIndex_STEREO {{{2
 	s_drive = 4,
 	s_bit_depth = 5,
 	s_downsampling = 6,
-	s_output_gain = 7
+	s_dry = 7,
+	s_wet = 8,
+	s_invert_wet_phase = 9
 } PortIndex_STEREO; // }}}2
 
 typedef struct { // Plugin_MONO {{{2
@@ -57,7 +65,9 @@ typedef struct { // Plugin_MONO {{{2
 	const float* drive;
 	const float* bit_depth;
 	const float* downsampling;
-	const float* output_gain;
+	const float* dry;
+	const float* wet;
+	const float* invert_wet_phase;
 
 	// inner
 	Bit_crusher_state *state;
@@ -74,7 +84,9 @@ typedef struct { // Plugin_STEREO {{{2
 	const float* drive;
 	const float* bit_depth;
 	const float* downsampling;
-	const float* output_gain;
+	const float* dry;
+	const float* wet;
+	const float* invert_wet_phase;
 
 	// inner
 	Bit_crusher_state *state_l;
@@ -131,7 +143,9 @@ static void connect_port_mono (
 		portConnectConst(drive, m_drive);
 		portConnectConst(bit_depth, m_bit_depth);
 		portConnectConst(downsampling, m_downsampling);
-		portConnectConst(output_gain, m_output_gain);
+		portConnectConst(dry, m_dry);
+		portConnectConst(wet, m_wet);
+		portConnectConst(invert_wet_phase, m_invert_wet_phase);
 	}
 }
 
@@ -150,7 +164,9 @@ static void connect_port_stereo (
 		portConnectConst(drive, s_drive);
 		portConnectConst(bit_depth, s_bit_depth);
 		portConnectConst(downsampling, s_downsampling);
-		portConnectConst(output_gain, s_output_gain);
+		portConnectConst(dry, s_dry);
+		portConnectConst(wet, s_wet);
+		portConnectConst(invert_wet_phase, s_invert_wet_phase);
 	}
 }
 
@@ -181,11 +197,25 @@ static void connect_port_stereo (
 		else return (uint8_t)val;
 	}
 
-	inline float prepare_output_gain_knob(float val)
+	inline float prepare_dry_knob(float val)
 	{
-		if (val < MIN_OUTPUT_GAIN) return MIN_OUTPUT_GAIN;
-		else if (val > MAX_OUTPUT_GAIN) return MAX_OUTPUT_GAIN;
+		if (val < MIN_DRY) return MIN_DRY;
+		else if (val > MAX_DRY) return MAX_DRY;
 		else return val;
+	}
+
+	inline float prepare_wet_knob(float val)
+	{
+		if (val < MIN_WET) return MIN_WET;
+		else if (val > MAX_WET) return MAX_WET;
+		else return val;
+	}
+
+	inline uint8_t prepare_invert_wet_phase_knob(float val)
+	{
+		if ((uint8_t)val < MIN_INVERT_WET_PHASE) return MIN_INVERT_WET_PHASE;
+		else if ((uint8_t)val > MAX_INVERT_WET_PHASE) return MAX_INVERT_WET_PHASE;
+		else return (uint8_t)val;
 	}
 
 // helpers }}}2
@@ -204,7 +234,9 @@ static void run_mono (
 	const float drive = prepare_drive_knob( *(plugin->drive) );
 	const uint8_t bit_depth = prepare_bit_depth_knob( *(plugin->bit_depth) );
 	const uint8_t downsampling = prepare_downsampling_knob( *(plugin->downsampling) );
-	const float output_gain = prepare_output_gain_knob( *(plugin->output_gain) );
+	const float dry = prepare_dry_knob( *(plugin->dry) );
+	const float wet = prepare_wet_knob( *(plugin->wet) );
+	const uint8_t invert_wet_phase = prepare_invert_wet_phase_knob( *(plugin->invert_wet_phase) );
 
 	bit_crusher_process(
 		plugin->state,
@@ -217,7 +249,9 @@ static void run_mono (
 		drive,
 		bit_depth,
 		downsampling,
-		output_gain
+		dry,
+		wet,
+		invert_wet_phase
 	);
 }
 
@@ -237,7 +271,9 @@ static void run_stereo (
 	const float drive = prepare_drive_knob( *(plugin->drive) );
 	const uint8_t bit_depth = prepare_bit_depth_knob( *(plugin->bit_depth) );
 	const uint8_t downsampling = prepare_downsampling_knob( *(plugin->downsampling) );
-	const float output_gain = prepare_output_gain_knob( *(plugin->output_gain) );
+	const float dry = prepare_dry_knob( *(plugin->dry) );
+	const float wet = prepare_wet_knob( *(plugin->wet) );
+	const uint8_t invert_wet_phase = prepare_invert_wet_phase_knob( *(plugin->invert_wet_phase) );
 
 	bit_crusher_process(
 		plugin->state_l,
@@ -250,7 +286,9 @@ static void run_stereo (
 		drive,
 		bit_depth,
 		downsampling,
-		output_gain
+		dry,
+		wet,
+		invert_wet_phase
 	);
 
 	bit_crusher_process(
@@ -264,7 +302,9 @@ static void run_stereo (
 		drive,
 		bit_depth,
 		downsampling,
-		output_gain
+		dry,
+		wet,
+		invert_wet_phase
 	);
 }
 

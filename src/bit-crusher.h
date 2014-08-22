@@ -35,6 +35,8 @@ void bit_crusher_process(
 	const float drive,
 	const uint8_t bit_depth,
 	const uint8_t downsampling,
-	const float output_gain);
+	const float dry,
+	const float wet,
+	const uint8_t invert_wet_phase);
 
 #endif

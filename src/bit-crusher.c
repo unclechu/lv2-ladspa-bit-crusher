@@ -64,7 +64,9 @@ void bit_crusher_process(
 	const float drive,
 	const uint8_t bit_depth,
 	const uint8_t downsampling,
-	const float output_gain)
+	const float dry,
+	const float wet,
+	const uint8_t invert_wet_phase)
 {
 	uint32_t i;
 
@@ -72,7 +74,7 @@ void bit_crusher_process(
 		state->sample_counter++;
 
 		if (state->sample_counter < downsampling) {
-			output[i] = state->last_sample;
+			output[i] = state->last_sample + (input[i] * DB_CO(dry));
 			continue;
 		} else state->sample_counter = 0;
 
@@ -80,8 +82,12 @@ void bit_crusher_process(
 			bit_crusher_crush_bit(
 				bit_crusher_drive( input[i], drive ),
 				bit_depth
-			) * DB_CO(output_gain);
+			) * DB_CO(wet);
+
+		if (invert_wet_phase == 1)
+			sample = -sample;
+
 		state->last_sample = sample;
-		output[i] = sample;
+		output[i] = sample + (input[i] * DB_CO(dry));
 	}
 }
