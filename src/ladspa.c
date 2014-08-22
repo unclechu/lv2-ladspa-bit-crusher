@@ -301,7 +301,6 @@ void __attribute__ ((constructor)) my_init(void)
 		descriptor_mono->Label = strdup("bit_crusher_mono");
 		descriptor_mono->Name = strdup("Bit Crusher (Mono)");
 		descriptor_mono->Maker = strdup("Viacheslav Lotsmanov");
-		descriptor_mono->Copyright = strdup("License: GNU/GPLv3 by Free Software Foundation");
 
 		descriptor_mono->PortCount = 6;
 
@@ -362,7 +361,6 @@ void __attribute__ ((constructor)) my_init(void)
 		descriptor_stereo->Label = strdup("bit_crusher_stereo");
 		descriptor_stereo->Name = strdup("Bit Crusher (Stereo)");
 		descriptor_stereo->Maker = strdup("Viacheslav Lotsmanov (unclechu)");
-		descriptor_stereo->Copyright = strdup("License: GNU/GPLv3 by Free Software Foundation");
 
 		descriptor_stereo->PortCount = 8;
 
@@ -424,7 +422,35 @@ void __attribute__ ((constructor)) my_init(void)
 
 void __attribute__ ((destructor)) my_fini(void)
 {
-	// TODO: deleting descriptors
+	unsigned long i;
+
+	// mono {{{3
+	if (descriptor_mono) {
+		free((char *)descriptor_mono->Label);
+		free((char *)descriptor_mono->Name);
+		free((char *)descriptor_mono->Maker);
+		free((LADSPA_PortDescriptor *)descriptor_mono->PortDescriptors);
+		for (i=0; i<descriptor_mono->PortCount; i++) {
+			free((char *)(descriptor_mono->PortNames[i]));
+		}
+		free((char **)descriptor_mono->PortNames);
+		free((LADSPA_PortRangeHint *)descriptor_mono->PortRangeHints);
+		free(descriptor_mono);
+	} // mono }}}3
+
+	// stereo {{{3
+	if (descriptor_stereo) {
+		free((char *)descriptor_stereo->Label);
+		free((char *)descriptor_stereo->Name);
+		free((char *)descriptor_stereo->Maker);
+		free((LADSPA_PortDescriptor *)descriptor_stereo->PortDescriptors);
+		for (i=0; i<descriptor_stereo->PortCount; i++) {
+			free((char *)(descriptor_stereo->PortNames[i]));
+		}
+		free((char **)descriptor_stereo->PortNames);
+		free((LADSPA_PortRangeHint *)descriptor_stereo->PortRangeHints);
+		free(descriptor_stereo);
+	} // stereo }}}3
 }
 
 // init and destroy ladspa descriptors }}}1
