@@ -15,272 +15,56 @@ Author: Viacheslav Lotsmanov
 
 #include "bit-crusher.h"
 
-#define MIN_DRIVE 0.0f
-#define MAX_DRIVE 90.0f
-#define MIN_BIT_DEPTH 1
-#define MAX_BIT_DEPTH 32
-#define MIN_DOWNSAMPLING 1
-#define MAX_DOWNSAMPLING 128
-#define MIN_OUTPUT_GAIN -90.0f
-#define MAX_OUTPUT_GAIN 12.0f
+#define INSTANCE_TYPE LADSPA_Handle
+#define DESCRIPTOR_TYPE LADSPA_Descriptor
+#define KNOB_VAL_TYPE LADSPA_Data
+#define NSAMPLES_TYPE unsigned long
+
+#include "ranges.h"
 
 // ports types {{{1
 
-typedef enum { // PortIndex_MONO {{{2
-	m_input = 0,
-	m_output = 1,
-	m_drive = 2,
-	m_bit_depth = 3,
-	m_downsampling = 4,
-	m_output_gain = 5
-} PortIndex_MONO; // }}}2
+#include "port_indexes.h"
 
-typedef enum { // PortIndex_STEREO {{{2
-	s_input_l = 0,
-	s_input_r = 1,
-	s_output_l = 2,
-	s_output_r = 3,
-	s_drive = 4,
-	s_bit_depth = 5,
-	s_downsampling = 6,
-	s_output_gain = 7
-} PortIndex_STEREO; // }}}2
+#define PORT_TYPE_F LADSPA_Data*
+#define PORT_TYPE_CF PORT_TYPE_F
 
-typedef struct { // Plugin_MONO {{{2
-	// audio ports
-	LADSPA_Data* input;
-	LADSPA_Data* output;
-
-	// knobs
-	LADSPA_Data* drive;
-	LADSPA_Data* bit_depth;
-	LADSPA_Data* downsampling;
-	LADSPA_Data* output_gain;
-
-	// inner
-	Bit_crusher_state *state;
-} Plugin_MONO; // }}}2
-
-typedef struct { // Plugin_STEREO {{{2
-	// audio ports
-	LADSPA_Data* input_l;
-	LADSPA_Data* input_r;
-	LADSPA_Data* output_l;
-	LADSPA_Data* output_r;
-
-	// knobs
-	LADSPA_Data* drive;
-	LADSPA_Data* bit_depth;
-	LADSPA_Data* downsampling;
-	LADSPA_Data* output_gain;
-
-	// inner
-	Bit_crusher_state *state_l;
-	Bit_crusher_state *state_r;
-} Plugin_STEREO; // }}}2
+#include "port_types.h"
 
 // ports types }}}1
 
 // instantiate() {{{1
 
-static LADSPA_Handle instantiate_mono (
-	const LADSPA_Descriptor *descriptor,
-	double rate)
-{
-	Plugin_MONO *plugin = (Plugin_MONO *)malloc(sizeof(Plugin_MONO));
-	plugin->state = (Bit_crusher_state *)malloc(sizeof(Bit_crusher_state));
-	bit_crusher_init_state(plugin->state);
-	return (LADSPA_Handle)plugin;
-}
+#define LV2_INSTANTIATE_ADDIT_ARGS
 
-static LADSPA_Handle instantiate_stereo (
-	const LADSPA_Descriptor *descriptor,
-	double rate)
-{
-	Plugin_STEREO *plugin = (Plugin_STEREO *)malloc(sizeof(Plugin_STEREO));
-	plugin->state_l = (Bit_crusher_state *)malloc(sizeof(Bit_crusher_state));
-	plugin->state_r = (Bit_crusher_state *)malloc(sizeof(Bit_crusher_state));
-	bit_crusher_init_state(plugin->state_l);
-	bit_crusher_init_state(plugin->state_r);
-	return (LADSPA_Handle)plugin;
-}
+#include "instantiate.h"
 
 // instantiate() }}}1
 
 // connect_port() {{{1
 
 #define portConnect(pname, pname_i) case pname_i: plugin->pname = data; break;
+#define portConnectConst(pname, pname_i) portConnect(pname, pname_i);
 
-static void connect_port_mono (
-	LADSPA_Handle instance,
-	unsigned long port,
-	LADSPA_Data* data)
-{
-	Plugin_MONO *plugin = (Plugin_MONO *)instance;
+#define PORT_CONNECT_PORT_TYPE unsigned long
+#define PORT_CONNECT_DATA_TYPE LADSPA_Data*
 
-	switch((PortIndex_MONO)port) {
-		portConnect(input, m_input);
-		portConnect(output, m_output);
-		portConnect(drive, m_drive);
-		portConnect(bit_depth, m_bit_depth);
-		portConnect(downsampling, m_downsampling);
-		portConnect(output_gain, m_output_gain);
-	}
-}
-
-static void connect_port_stereo (
-	LADSPA_Handle instance,
-	unsigned long port,
-	LADSPA_Data* data)
-{
-	Plugin_STEREO *plugin = (Plugin_STEREO *)instance;
-
-	switch((PortIndex_STEREO)port) {
-		portConnect(input_l, s_input_l);
-		portConnect(input_r, s_input_r);
-		portConnect(output_l, s_output_l);
-		portConnect(output_r, s_output_r);
-		portConnect(drive, s_drive);
-		portConnect(bit_depth, s_bit_depth);
-		portConnect(downsampling, s_downsampling);
-		portConnect(output_gain, s_output_gain);
-	}
-}
+#include "port_connect.h"
 
 // connect_port() }}}1
 
 // run {{{1
 
-// helpers {{{2
+#include "run_helpers.h"
 
-	inline float prepare_drive_knob(LADSPA_Data val)
-	{
-		if (val < MIN_DRIVE) return MIN_DRIVE;
-		else if (val > MAX_DRIVE) return MAX_DRIVE;
-		else return val;
-	}
+#define RUN_INPUT_TYPE LADSPA_Data*
+#define RUN_OUTPUT_TYPE LADSPA_Data*
 
-	inline uint8_t prepare_bit_depth_knob(LADSPA_Data val)
-	{
-		if ((uint8_t)val < MIN_BIT_DEPTH) return MIN_BIT_DEPTH;
-		else if ((uint8_t)val > MAX_BIT_DEPTH) return MAX_BIT_DEPTH;
-		else return (uint8_t)val;
-	}
-
-	inline uint8_t prepare_downsampling_knob(LADSPA_Data val)
-	{
-		if ((uint8_t)val < MIN_DOWNSAMPLING) return MIN_DOWNSAMPLING;
-		else if ((uint8_t)val > MAX_DOWNSAMPLING) return MAX_DOWNSAMPLING;
-		else return (uint8_t)val;
-	}
-
-	inline float prepare_output_gain_knob(LADSPA_Data val)
-	{
-		if (val < MIN_OUTPUT_GAIN) return MIN_OUTPUT_GAIN;
-		else if (val > MAX_OUTPUT_GAIN) return MAX_OUTPUT_GAIN;
-		else return val;
-	}
-
-// helpers }}}2
-
-static void run_mono (
-	LADSPA_Handle instance,
-	unsigned long n_samples)
-{
-	const Plugin_MONO *plugin = (const Plugin_MONO *)instance;
-
-	// audio ports
-	LADSPA_Data* input = plugin->input;
-	LADSPA_Data* output = plugin->output;
-
-	// knobs
-	const float drive = prepare_drive_knob( *(plugin->drive) );
-	const uint8_t bit_depth = prepare_bit_depth_knob( *(plugin->bit_depth) );
-	const uint8_t downsampling = prepare_downsampling_knob( *(plugin->downsampling) );
-	const float output_gain = prepare_output_gain_knob( *(plugin->output_gain) );
-
-	bit_crusher_process(
-		plugin->state,
-
-		n_samples,
-
-		input,
-		output,
-
-		drive,
-		bit_depth,
-		downsampling,
-		output_gain
-	);
-}
-
-static void run_stereo (
-	LADSPA_Handle instance,
-	unsigned long n_samples)
-{
-	const Plugin_STEREO *plugin = (const Plugin_STEREO *)instance;
-
-	// audio ports
-	LADSPA_Data* input_l = plugin->input_l;
-	LADSPA_Data* input_r = plugin->input_r;
-	LADSPA_Data* output_l = plugin->output_l;
-	LADSPA_Data* output_r = plugin->output_r;
-
-	// knobs
-	const float drive = prepare_drive_knob( *(plugin->drive) );
-	const uint8_t bit_depth = prepare_bit_depth_knob( *(plugin->bit_depth) );
-	const uint8_t downsampling = prepare_downsampling_knob( *(plugin->downsampling) );
-	const float output_gain = prepare_output_gain_knob( *(plugin->output_gain) );
-
-	bit_crusher_process(
-		plugin->state_l,
-
-		n_samples,
-
-		input_l,
-		output_l,
-
-		drive,
-		bit_depth,
-		downsampling,
-		output_gain
-	);
-
-	bit_crusher_process(
-		plugin->state_r,
-
-		n_samples,
-
-		input_r,
-		output_r,
-
-		drive,
-		bit_depth,
-		downsampling,
-		output_gain
-	);
-}
+#include "run.h"
 
 // run() }}}1
 
-// cleanup() {{{1
-
-static void cleanup_mono ( LADSPA_Handle instance )
-{
-	const Plugin_MONO *plugin = (const Plugin_MONO *)instance;
-	free( plugin->state );
-	free( instance );
-}
-
-static void cleanup_stereo ( LADSPA_Handle instance )
-{
-	const Plugin_STEREO *plugin = (const Plugin_STEREO *)instance;
-	free( plugin->state_l );
-	free( plugin->state_r );
-	free( instance );
-}
-
-// cleanup() }}}1
+#include "cleanup.h"
 
 LADSPA_Descriptor* descriptor_mono = NULL;
 LADSPA_Descriptor* descriptor_stereo = NULL;
@@ -337,7 +121,7 @@ const LADSPA_Descriptor* ladspa_descriptor(unsigned long Index)
 			descriptor_mono->Name = strdup("Bit Crusher (Mono)");
 			descriptor_mono->Maker = strdup("Viacheslav Lotsmanov");
 
-			descriptor_mono->PortCount = 6;
+			descriptor_mono->PortCount = 8;
 
 			// ports descriptors {{{3
 			portDescriptors = (LADSPA_PortDescriptor *)calloc(descriptor_mono->PortCount, sizeof(LADSPA_PortDescriptor));
@@ -347,7 +131,9 @@ const LADSPA_Descriptor* ladspa_descriptor(unsigned long Index)
 			portDescriptors[m_drive] = LADSPA_PORT_INPUT | LADSPA_PORT_CONTROL;
 			portDescriptors[m_bit_depth] = LADSPA_PORT_INPUT | LADSPA_PORT_CONTROL;
 			portDescriptors[m_downsampling] = LADSPA_PORT_INPUT | LADSPA_PORT_CONTROL;
-			portDescriptors[m_output_gain] = LADSPA_PORT_INPUT | LADSPA_PORT_CONTROL;
+			portDescriptors[m_dry] = LADSPA_PORT_INPUT | LADSPA_PORT_CONTROL;
+			portDescriptors[m_wet] = LADSPA_PORT_INPUT | LADSPA_PORT_CONTROL;
+			portDescriptors[m_invert_wet_phase] = LADSPA_PORT_INPUT | LADSPA_PORT_CONTROL;
 			// ports descriptors }}}3
 
 			// ports names {{{3
@@ -358,7 +144,9 @@ const LADSPA_Descriptor* ladspa_descriptor(unsigned long Index)
 			portNames[m_drive] = strdup("Drive (dB)");
 			portNames[m_bit_depth] = strdup("Bit-depth");
 			portNames[m_downsampling] = strdup("Downsampling (x)");
-			portNames[m_output_gain] = strdup("Output gain (dB)");
+			portNames[m_dry] = strdup("Dry (dB)");
+			portNames[m_wet] = strdup("Wet (dB)");
+			portNames[m_invert_wet_phase] = strdup("Invert wet phase");
 			// ports names }}}3
 
 			// ports range hints {{{3
@@ -375,9 +163,15 @@ const LADSPA_Descriptor* ladspa_descriptor(unsigned long Index)
 			portRangeHints[m_downsampling].HintDescriptor = (LADSPA_HINT_DEFAULT_1 | LADSPA_HINT_BOUNDED_BELOW | LADSPA_HINT_BOUNDED_ABOVE);
 			portRangeHints[m_downsampling].LowerBound = MIN_DOWNSAMPLING;
 			portRangeHints[m_downsampling].UpperBound = MAX_DOWNSAMPLING;
-			portRangeHints[m_output_gain].HintDescriptor = (LADSPA_HINT_DEFAULT_0 | LADSPA_HINT_BOUNDED_BELOW | LADSPA_HINT_BOUNDED_ABOVE);
-			portRangeHints[m_output_gain].LowerBound = MIN_OUTPUT_GAIN;
-			portRangeHints[m_output_gain].UpperBound = MAX_OUTPUT_GAIN;
+			portRangeHints[m_dry].HintDescriptor = (LADSPA_HINT_DEFAULT_MINIMUM | LADSPA_HINT_BOUNDED_BELOW | LADSPA_HINT_BOUNDED_ABOVE);
+			portRangeHints[m_dry].LowerBound = MIN_DRY;
+			portRangeHints[m_dry].UpperBound = MAX_DRY;
+			portRangeHints[m_wet].HintDescriptor = (LADSPA_HINT_DEFAULT_0 | LADSPA_HINT_BOUNDED_BELOW | LADSPA_HINT_BOUNDED_ABOVE);
+			portRangeHints[m_wet].LowerBound = MIN_WET;
+			portRangeHints[m_wet].UpperBound = MAX_WET;
+			portRangeHints[m_invert_wet_phase].HintDescriptor = (LADSPA_HINT_DEFAULT_0 | LADSPA_HINT_BOUNDED_BELOW | LADSPA_HINT_BOUNDED_ABOVE);
+			portRangeHints[m_invert_wet_phase].LowerBound = MIN_INVERT_WET_PHASE;
+			portRangeHints[m_invert_wet_phase].UpperBound = MAX_INVERT_WET_PHASE;
 			// ports range hints }}}3
 
 			// binds {{{3
@@ -407,7 +201,7 @@ const LADSPA_Descriptor* ladspa_descriptor(unsigned long Index)
 			descriptor_stereo->Name = strdup("Bit Crusher (Stereo)");
 			descriptor_stereo->Maker = strdup("Viacheslav Lotsmanov (unclechu)");
 
-			descriptor_stereo->PortCount = 8;
+			descriptor_stereo->PortCount = 10;
 
 			// ports descriptors {{{3
 			portDescriptors = (LADSPA_PortDescriptor *)calloc(descriptor_stereo->PortCount, sizeof(LADSPA_PortDescriptor));
@@ -419,7 +213,9 @@ const LADSPA_Descriptor* ladspa_descriptor(unsigned long Index)
 			portDescriptors[s_drive] = LADSPA_PORT_INPUT | LADSPA_PORT_CONTROL;
 			portDescriptors[s_bit_depth] = LADSPA_PORT_INPUT | LADSPA_PORT_CONTROL;
 			portDescriptors[s_downsampling] = LADSPA_PORT_INPUT | LADSPA_PORT_CONTROL;
-			portDescriptors[s_output_gain] = LADSPA_PORT_INPUT | LADSPA_PORT_CONTROL;
+			portDescriptors[s_dry] = LADSPA_PORT_INPUT | LADSPA_PORT_CONTROL;
+			portDescriptors[s_wet] = LADSPA_PORT_INPUT | LADSPA_PORT_CONTROL;
+			portDescriptors[s_invert_wet_phase] = LADSPA_PORT_INPUT | LADSPA_PORT_CONTROL;
 			// ports descriptors }}}3
 
 			// ports names {{{3
@@ -432,7 +228,9 @@ const LADSPA_Descriptor* ladspa_descriptor(unsigned long Index)
 			portNames[s_drive] = strdup("Drive (dB)");
 			portNames[s_bit_depth] = strdup("Bit-depth");
 			portNames[s_downsampling] = strdup("Downsampling (x)");
-			portNames[s_output_gain] = strdup("Output gain (dB)");
+			portNames[s_dry] = strdup("Dry (dB)");
+			portNames[s_wet] = strdup("Wet (dB)");
+			portNames[s_invert_wet_phase] = strdup("Invert wet phase");
 			// ports names }}}3
 
 			// ports range hints {{{3
@@ -451,9 +249,15 @@ const LADSPA_Descriptor* ladspa_descriptor(unsigned long Index)
 			portRangeHints[s_downsampling].HintDescriptor = (LADSPA_HINT_DEFAULT_1 | LADSPA_HINT_BOUNDED_BELOW | LADSPA_HINT_BOUNDED_ABOVE);
 			portRangeHints[s_downsampling].LowerBound = MIN_DOWNSAMPLING;
 			portRangeHints[s_downsampling].UpperBound = MAX_DOWNSAMPLING;
-			portRangeHints[s_output_gain].HintDescriptor = (LADSPA_HINT_DEFAULT_0 | LADSPA_HINT_BOUNDED_BELOW | LADSPA_HINT_BOUNDED_ABOVE);
-			portRangeHints[s_output_gain].LowerBound = MIN_OUTPUT_GAIN;
-			portRangeHints[s_output_gain].UpperBound = MAX_OUTPUT_GAIN;
+			portRangeHints[s_dry].HintDescriptor = (LADSPA_HINT_DEFAULT_MINIMUM | LADSPA_HINT_BOUNDED_BELOW | LADSPA_HINT_BOUNDED_ABOVE);
+			portRangeHints[s_dry].LowerBound = MIN_DRY;
+			portRangeHints[s_dry].UpperBound = MAX_DRY;
+			portRangeHints[s_wet].HintDescriptor = (LADSPA_HINT_DEFAULT_0 | LADSPA_HINT_BOUNDED_BELOW | LADSPA_HINT_BOUNDED_ABOVE);
+			portRangeHints[s_wet].LowerBound = MIN_WET;
+			portRangeHints[s_wet].UpperBound = MAX_WET;
+			portRangeHints[s_invert_wet_phase].HintDescriptor = (LADSPA_HINT_DEFAULT_0 | LADSPA_HINT_BOUNDED_BELOW | LADSPA_HINT_BOUNDED_ABOVE);
+			portRangeHints[s_invert_wet_phase].LowerBound = MIN_INVERT_WET_PHASE;
+			portRangeHints[s_invert_wet_phase].UpperBound = MAX_INVERT_WET_PHASE;
 			// ports range hints }}}3
 
 			// binds {{{3
