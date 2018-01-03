@@ -120,6 +120,7 @@ const LADSPA_Descriptor* ladspa_descriptor(unsigned long Index)
 			descriptor_mono->Label = strdup("bit_crusher_mono");
 			descriptor_mono->Name = strdup("Bit Crusher (Mono)");
 			descriptor_mono->Maker = strdup("Viacheslav Lotsmanov");
+			descriptor_mono->Copyright = strdup("Viacheslav Lotsmanov");
 
 			descriptor_mono->PortCount = 8;
 
