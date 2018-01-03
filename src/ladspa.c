@@ -200,6 +200,7 @@ const LADSPA_Descriptor* ladspa_descriptor(unsigned long Index)
 			descriptor_stereo->Label = strdup("bit_crusher_stereo");
 			descriptor_stereo->Name = strdup("Bit Crusher (Stereo)");
 			descriptor_stereo->Maker = strdup("Viacheslav Lotsmanov (unclechu)");
+			descriptor_stereo->Copyright = strdup("Viacheslav Lotsmanov (unclechu)");
 
 			descriptor_stereo->PortCount = 10;
 
