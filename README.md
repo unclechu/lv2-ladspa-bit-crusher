@@ -3,6 +3,11 @@ Bit Crusher
 
 DSP-plugin (LV2 and LADSPA).
 
+Contributors
+============
+
+- [@mwht](https://github.com/mwht)
+
 License
 =======
 
